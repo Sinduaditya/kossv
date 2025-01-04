@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     use HasFactory;
-    protected $fillable = ['id_pemesanan', 'metode_pembayaran', 'tanggal_pemesanan', 'jumlah_pembayaran','link_pembayaran'];
+    protected $fillable = ['id_pemesanan', 'metode_pembayaran', 'tanggal_pemesanan', 'jumlah_pembayaran', 'link_pembayaran'];
 
-     // Relationship to booking
-     public function booking()
-     {
-         return $this->belongsTo(Booking::class, 'id_pemesanan');
-     }
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'id_pemesanan');
+    }
+
 }

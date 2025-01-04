@@ -54,7 +54,7 @@ class AuthController extends Controller
         $data['password'] = Hash::make($data['password']);
         Customer::create($data);
 
-        return redirect()->route('login')->with('success', 'Registration successful. Please login.');
+        return redirect()->route('login_user')->with('success', 'Registration successful. Please login.');
     }
 
     // Proses logout
@@ -63,7 +63,6 @@ class AuthController extends Controller
         Auth::guard('customer')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        return redirect('/');
+        return redirect()->route('login_user');
     }
 }

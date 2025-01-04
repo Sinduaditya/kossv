@@ -10,8 +10,8 @@ class Room extends Model
     use HasFactory;
     protected $fillable = ['gambar', 'tipe_kamar', 'harga', 'status_ketersediaan', 'deskripsi', 'date_added'];
 
-      // Relationship to bookings
-         public function bookings()
+    // Relationship to bookings
+    public function bookings()
     {
         return $this->hasMany(Booking::class, 'id_kamar');
     }

@@ -10,7 +10,12 @@
                 </div>
                 <div class="col-lg-5">
                     <div class="section-heading">
-                        <p>{{ Auth::check() ? Auth::user()->name : 'Guest' }}</p>
+                        @if (auth('customer')->check())
+                            <p>Selamat datang, {{ auth('customer')->user()->nama }}</p>
+                        @else
+                            <p>Selamat datang, Pengunjung</p>
+                        @endif
+
                         <h6>| Kos Sv2</h6>
                         <h2>Kos Paling Strategis <br> di Semarang</h2>
                     </div>

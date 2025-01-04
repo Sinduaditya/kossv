@@ -23,7 +23,7 @@ class BookingCustController extends Controller
         $room = Room::findOrFail($id);
 
         Booking::create([
-            'user_id' => Auth::id(),
+            'user_id' => Auth::guard('customer')->id(),
             'id_kamar' => $room->id,
             'tanggal_pemesanan' => $request->tanggal_pemesanan,
             'tanggal_berakhir' => $request->tanggal_berakhir,
@@ -47,17 +47,21 @@ class BookingCustController extends Controller
         return redirect()->route('home.kamar')->with('success', 'Booking berhasil dicancel.');
     }
 
-    // Tampilkan daftar booking user
     public function list()
     {
-        // Ambil data booking berdasarkan user yang sedang login
-        $bookings = Booking::with('room')->where('user_id', Auth::id())->get();
+        // Ambil user ID dari guard 'customer'
+        $userId = Auth::guard('customer')->id();
 
-        // Pastikan hanya user yang login dapat melihat datanya
+        // Query data booking milik user yang sedang login
+        $bookings = Booking::with('room')
+            ->where('user_id', $userId)
+            ->get();
+
+        // Jika tidak ada data booking
         if ($bookings->isEmpty()) {
             return redirect()->route('home')->with('error', 'No bookings found.');
         }
 
-        return view('frontend.list', compact('bookings'));
+        return view('frontend.list', compact('bookings', 'userId'));
     }
 }

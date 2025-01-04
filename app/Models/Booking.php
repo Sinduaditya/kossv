@@ -15,15 +15,15 @@ class Booking extends Model
         return $this->belongsTo(Customer::class, 'user_id');
     }
 
-    // Relasi ke Room (satu booking hanya untuk satu kamar)
     public function room()
     {
         return $this->belongsTo(Room::class, 'id_kamar');
     }
 
-    // Relasi ke Payment (satu booking memiliki satu pembayaran)
     public function payment()
     {
         return $this->hasOne(Payment::class, 'id_pemesanan');
     }
+
+
 }

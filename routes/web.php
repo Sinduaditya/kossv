@@ -23,21 +23,22 @@ use Illuminate\Support\Facades\Route;
 */
 
 // User Not Authenticated Route
-Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/kamar', [HomeController::class, 'rooms'])->name('home.kamar');
 Route::get('/fasilitas', [HomeController::class, 'facility'])->name('home.facility');
 Route::get('/kontak', [HomeController::class, 'contact'])->name('home.contact');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // User Authenticated Route (Customer)
-Route::middleware('auth:customer')->group(function () {
+Route::middleware(['auth:customer'])->group(function () {
     // Routes untuk Payment
     Route::get('/payment/pay/{id}', [PaymentCustController::class, 'pay'])->name('payment.pay');
-    Route::post('/payment/callback', [PaymentCustController::class, 'callback'])->name('payment.callback');
-
+    // Route::get('/kamar', [HomeController::class, 'rooms'])->name('home.kamar');
+    Route::get('/fasilitas', [HomeController::class, 'facility'])->name('home.facility');
+    Route::get('/kontak', [HomeController::class, 'contact'])->name('home.contact');
     // Routes untuk Booking
     Route::get('/booking/reserve/{id}', [BookingCustController::class, 'reserve'])->name('booking.reserve');
     Route::post('/booking/store/{id}', [BookingCustController::class, 'store'])->name('bookingCust.store');
-    Route::get('/booking/list', [BookingCustController::class, 'list'])->name('booking.list');
+    Route::get('/booking/list/', [BookingCustController::class, 'list'])->name('booking.list');
     Route::delete('/bookingCust/{id}', [BookingCustController::class, 'destroy'])->name('bookingCust.destroy');
 });
 

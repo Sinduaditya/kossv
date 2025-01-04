@@ -40,7 +40,6 @@ return [
             'provider' => 'users',
         ],
         'customer' => [
-            // Guard untuk customer
             'driver' => 'session',
             'provider' => 'customers',
         ],
