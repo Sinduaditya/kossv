@@ -29,17 +29,20 @@ class PaymentCustController extends Controller
             $booking = Booking::with('room')->findOrFail($id);
 
             // Buat instance Payment baru
-            $order = new Payment;
-            $order->id_pemesanan = $booking->id;
-            $order->metode_pembayaran = 'Xendit'; // Contoh metode pembayaran
-            $order->tanggal_pemesanan = now();
-            $order->jumlah_pembayaran = $booking->room->harga;
+            $payment = Payment::create([
+                'id_pemesanan' => $booking->id, // Menggunakan ID Booking
+                'metode_pembayaran' => 'Xendit', // Contoh metode pembayaran
+                'tanggal_pemesanan' => now(),
+                'jumlah_pembayaran' => $booking->room->harga,
+            ]);
 
             // Parameter untuk invoice
             $createInvoice = new CreateInvoiceRequest([
-            'external_id' => (string) Str::uuid(),
-            'amount' => $order->jumlah_pembayaran,
-            'invoice_duration' => 172800, // 2 hari dalam detik
+                'external_id' => $booking->kode_booking, // Gunakan kode_booking
+                'amount' => $payment->jumlah_pembayaran,
+                'invoice_duration' => 172800, // 2 hari dalam detik
+                'success_redirect_url' => route('booking.list'), // Redirect setelah sukses
+                'failure_redirect_url' => route('booking.list'), // Redirect jika gagal
             ]);
 
             // Buat invoice di Xendit
@@ -47,17 +50,18 @@ class PaymentCustController extends Controller
             $generateInvoice = $apiInstance->createInvoice($createInvoice);
 
             // Simpan link pembayaran ke database
-            $order->link_pembayaran = $generateInvoice['invoice_url'];
-            $order->save();
+            $payment->update(['link_pembayaran' => $generateInvoice['invoice_url']]);
 
             // Redirect ke halaman pembayaran Xendit
-            return redirect()->away($order->link_pembayaran);
-
+            return redirect()->away($payment->link_pembayaran);
         } catch (\Throwable $th) {
             // Handle error jika gagal membuat invoice Xendit
-            return response()->json([
-            'error' => 'Failed to create Xendit invoice: ' . $th->getMessage(),
-            ], 500);
+            return response()->json(
+                [
+                    'error' => 'Failed to create Xendit invoice: ' . $th->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -65,38 +69,38 @@ class PaymentCustController extends Controller
     {
         // Ambil data callback
         $data = $request->all();
-        $external_id = $data['external_id'];
-        $status = strtolower($data['status']);
+        $external_id = $data['external_id']; // Ini adalah kode_booking
+        $status = $data['status'];
+        // $status = strtolower($data['status']);
         $payment_method = $data['payment_method'];
 
-        // Logging untuk debug
-        Log::info('Xendit Callback: ', $data);
+        // Validasi callback token
+        $xenditCallbackToken = 'bAO18ZZW65fhqZsPIWb8ovtfaZYEV93dLYPz21rjnbyibm6F';
+        $receivedToken = $request->header('x-callback-token');
+        if ($xenditCallbackToken !== $receivedToken) {
+            Log::error('Invalid Callback Token!');
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-        // Cari payment berdasarkan external_id
-        $order = Payment::where('external_id', $external_id)->first();
+        // Cari booking berdasarkan kode_booking
+        $booking = Booking::where('kode_booking', $external_id)->first();
 
-        if ($order) {
-            // Update status pembayaran pada tabel payments
-            $order->status = $status;
-            $order->payment_method = $payment_method;
-            $order->save();
-
-            // Update status pembayaran booking menjadi 'paid' atau 'failed'
-            $booking = $order->booking;
-            if ($booking) {
-            $booking_status = $status === 'paid' ? 'paid' : 'failed';
+        if ($booking) {
+            // Update status pembayaran di tabel booking
+            $booking_status = $status === 'PAID' ? 'paid' : 'failed';
             $booking->update(['status_pembayaran' => $booking_status]);
-            Log::info('Booking Status Updated: ' . $booking->id . ' to ' . $booking_status);
-            }
+
+            // Log untuk debug
+            Log::info('Booking Status Updated: ' . $booking->kode_booking . ' to ' . $booking_status);
 
             return response()->json([
-            'message' => 'Webhook received',
-            'status' => $status,
-            'payment_method' => $payment_method,
+                'message' => 'Webhook processed successfully',
+                'status' => $status,
+                'payment_method' => $payment_method,
             ], 200);
         }
 
-        return response()->json(['message' => 'Payment not found'], 404);
+        return response()->json(['message' => 'Booking not found'], 404);
     }
 
 }

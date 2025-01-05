@@ -15,11 +15,17 @@
 
     <!-- Bootstrap core CSS -->
     <link href="{{ asset('frontend/css/bootstrap.min.css') }}" rel="stylesheet">
+    <script>
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    </script>
 
     <!-- Additional CSS Files -->
     {{-- <link rel="stylesheet" href="{{ asset('frontend/css/fontawesome.css') }}"> --}}
     <link rel="stylesheet" href="{{ asset('frontend/css/custom.css') }}">
     <style>
+        /* Preloader Style */
         #preloader {
             position: fixed;
             top: 0;
@@ -32,17 +38,23 @@
             justify-content: center;
             align-items: center;
         }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.25em;
+        }
     </style>
 
 </head>
 
 <body>
-     <!-- Preloader -->
-     <div id="preloader">
+    <!-- Preloader -->
+    <div id="preloader">
         <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+
     <!-- ***** Header Area Start ***** -->
     @include('frontend.partials.navbar')
     <!-- ***** Header Area End ***** -->
@@ -51,19 +63,20 @@
     @yield('content')
     <!-- End Content Kos -->
 
-
     <!-- footer -->
     @include('frontend.partials.footer')
     <!-- End Footer -->
 
     <!-- Scripts -->
     <script>
-        // Hide preloader when the page fully loads
-        window.onload = function () {
-            document.getElementById('preloader').style.display = 'none';
-        };
+        // Detect if the page has fully loaded and hide the preloader
+        window.addEventListener('load', function() {
+            document.getElementById('preloader').style.display = 'none'; // Sembunyikan preloader
+            document.body.style.overflow = 'auto'; // Enable scroll if disabled during preloading
+        });
     </script>
     <script src="{{ asset('frontend/js/bootstrap.min.js') }}"></script>
+
 </body>
 
 </html>

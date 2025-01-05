@@ -20,10 +20,20 @@ class BookingCustController extends Controller
     // Simpan data booking
     public function store(Request $request, $id)
     {
+        $userId = Auth::guard('customer')->id();
+
+        $existingBooking = Booking::where('user_id', $userId)
+            ->whereIn('status_pembayaran', ['pending', 'failed'])
+            ->first();
+
+        if ($existingBooking) {
+            return redirect()->route('booking.list')->with('error', 'Anda hanya dapat memiliki satu booking aktif. Harap selesaikan pembayaran atau batalkan booking sebelumnya.');
+        }
+
         $room = Room::findOrFail($id);
 
         Booking::create([
-            'user_id' => Auth::guard('customer')->id(),
+            'user_id' => $userId,
             'id_kamar' => $room->id,
             'tanggal_pemesanan' => $request->tanggal_pemesanan,
             'tanggal_berakhir' => $request->tanggal_berakhir,
@@ -32,7 +42,6 @@ class BookingCustController extends Controller
         ]);
 
         $room->update(['status_ketersediaan' => false]);
-
         return redirect()->route('booking.list')->with('success', 'Booking berhasil dibuat.');
     }
 
@@ -53,9 +62,7 @@ class BookingCustController extends Controller
         $userId = Auth::guard('customer')->id();
 
         // Query data booking milik user yang sedang login
-        $bookings = Booking::with('room')
-            ->where('user_id', $userId)
-            ->get();
+        $bookings = Booking::with('room')->where('user_id', $userId)->get();
 
         // Jika tidak ada data booking
         if ($bookings->isEmpty()) {
